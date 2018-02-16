@@ -1,12 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "graph_defs.h"
+#include "graph_formats.h"
 
 #define MAX 1024
 #define INTERVAL_MAX 100
 
 struct interval { double start; double end; };
-
-struct graph { int num_nodes; int *edges; int size; int length; };
 
 int comp_starts(const void *first, const void *second) {
 	double first_start = ((struct interval *)first)->start;
@@ -14,18 +14,18 @@ int comp_starts(const void *first, const void *second) {
 	return second_start-first_start;
 }
 
-void make_edge(struct graph *graph, int from, int to)
+void make_edge(struct edgelist *graph, int from, int to)
 {
-	if(graph->size >= graph->length)
+	if(graph->num_edges >= graph->size)
 	{
-		graph->length *= 2;
-		graph->edges = realloc(graph->edges, graph->length);
+		graph->size *= 2;
+		graph->edges = realloc(graph->edges, graph->size);
 	}
-	(graph->edges)[(graph->size)++] = from;
-	(graph->edges)[(graph->size)++] = to;
+	(graph->edges)[(graph->num_edges)++] = from;
+	(graph->edges)[(graph->num_edges)++] = to;
 }
 
-struct graph * generate(int size)
+struct edgelist * generate(int size)
 {
 	struct interval *intervals = malloc(size*sizeof(struct interval));
 	for(int i = 0; i < size; i++)
@@ -35,9 +35,9 @@ struct graph * generate(int size)
 		intervals[i] = (struct interval) { start, end };
 	}
 	qsort(intervals, size, sizeof(struct interval), comp_starts);
-	struct graph *graph = malloc(sizeof(struct graph));
+	struct edgelist *graph = malloc(sizeof(struct edgelist));
 	int *edges = malloc(32*sizeof(int)); /* 32 is a nice, round number */
-	*graph = (struct graph){ size, edges, 0, 32 };
+	*graph = (struct edgelist){ size, edges, 0, 32 };
 	for(int i = 0; i < size; i++)
 	{
 		int j = i+1;
@@ -51,3 +51,18 @@ struct graph * generate(int size)
 	free(intervals);
 	return graph;
 }
+
+int main(int argc, char **argv)
+{
+	if(argc < 2)
+	{
+		puts("\tUSAGE:\n");
+		puts("generate-ig *output-file*");
+		return 0;
+	}
+	int size = MAX/(rand()%MAX)*3;
+	struct edgelist *graph = generate(size);
+	write_dimacs_edgelist(graph, argv[1]);
+	return 0;
+}
+
