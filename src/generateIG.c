@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include "graph_defs.h"
 #include "graph_formats.h"
 
-#define MAX 1024
+#define MAX 1023
 #define INTERVAL_MAX 100
 
 struct interval { double start; double end; };
@@ -28,6 +29,7 @@ void make_edge(struct edgelist *graph, int from, int to)
 struct edgelist * generate(int size)
 {
 	struct interval *intervals = malloc(size*sizeof(struct interval));
+	srand48(time(0));
 	for(int i = 0; i < size; i++)
 	{
 		double start = INTERVAL_MAX*drand48();
@@ -60,6 +62,7 @@ int main(int argc, char **argv)
 		puts("generate-ig *output-file*");
 		return 0;
 	}
+	srand(time(0));
 	int size = MAX/(rand()%MAX)*3;
 	struct edgelist *graph = generate(size);
 	write_dimacs_edgelist(graph, argv[1]);
