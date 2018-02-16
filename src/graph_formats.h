@@ -3,7 +3,7 @@
 
 #include "graph_defs.h"
 
-void write_dimacs_edgelist(struct edgelist *graph, char *filename);
+void write_dimacs_edgelist(struct edgelist *, char *);
 
 
 #endif
