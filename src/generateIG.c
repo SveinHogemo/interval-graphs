@@ -12,7 +12,7 @@ struct interval { double start; double end; };
 int comp_starts(const void *first, const void *second) {
 	double first_start = ((struct interval *)first)->start;
 	double second_start = ((struct interval *)second)->start;
-	return second_start-first_start;
+	return first_start-second_start;
 }
 
 void make_edge(struct edgelist *graph, int from, int to)
@@ -20,7 +20,7 @@ void make_edge(struct edgelist *graph, int from, int to)
 	if(graph->num_edges >= graph->size)
 	{
 		graph->size *= 2;
-		graph->edges = realloc(graph->edges, graph->size);
+		graph->edges = realloc(graph->edges, graph->size*sizeof(int));
 	}
 	(graph->edges)[(graph->num_edges)++] = from;
 	(graph->edges)[(graph->num_edges)++] = to;
@@ -35,8 +35,11 @@ struct edgelist * generate(int size)
 		double start = INTERVAL_MAX*drand48();
 		double end = INTERVAL_MAX*drand48()+start;
 		intervals[i] = (struct interval) { start, end };
+		printf("Interval #%d = [%f, %f]\n", i+1, start, end);
 	}
 	qsort(intervals, size, sizeof(struct interval), comp_starts);
+	for(int i = 0; i < size; i++)
+		printf("Interval #%d = [%f, %f]\n", i+1, intervals[i].start, intervals[i].end);
 	struct edgelist *graph = malloc(sizeof(struct edgelist));
 	int *edges = malloc(32*sizeof(int)); /* 32 is a nice, round number */
 	*graph = (struct edgelist){ size, edges, 0, 32 };
