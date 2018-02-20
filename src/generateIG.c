@@ -35,11 +35,8 @@ struct edgelist * generate(int size)
 		double start = INTERVAL_MAX*drand48();
 		double end = INTERVAL_MAX*drand48()+start;
 		intervals[i] = (struct interval) { start, end };
-		printf("Interval #%d = [%f, %f]\n", i+1, start, end);
 	}
 	qsort(intervals, size, sizeof(struct interval), comp_starts);
-	for(int i = 0; i < size; i++)
-		printf("Interval #%d = [%f, %f]\n", i+1, intervals[i].start, intervals[i].end);
 	struct edgelist *graph = malloc(sizeof(struct edgelist));
 	int *edges = malloc(32*sizeof(int)); /* 32 is a nice, round number */
 	*graph = (struct edgelist){ size, edges, 0, 32 };
