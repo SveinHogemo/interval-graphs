@@ -12,7 +12,7 @@ struct interval { double start; double end; };
 int comp_starts(const void *first, const void *second) {
 	double first_start = ((struct interval *)first)->start;
 	double second_start = ((struct interval *)second)->start;
-	return first_start-second_start;
+	return (first_start>second_start)-(first_start<second_start);
 }
 
 void make_edge(struct edgelist *graph, int from, int to)
