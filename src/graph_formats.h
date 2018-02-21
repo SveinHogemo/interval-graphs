@@ -5,5 +5,6 @@
 
 void write_dimacs_edgelist(struct edgelist *, char *);
 
+struct edgelist * read_dimacs_edgelist(char *);
 
 #endif

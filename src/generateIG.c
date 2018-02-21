@@ -15,17 +15,6 @@ int comp_starts(const void *first, const void *second) {
 	return (first_start>second_start)-(first_start<second_start);
 }
 
-void make_edge(struct edgelist *graph, int from, int to)
-{
-	if(graph->num_edges >= graph->size)
-	{
-		graph->size *= 2;
-		graph->edges = realloc(graph->edges, graph->size*sizeof(int));
-	}
-	(graph->edges)[(graph->num_edges)++] = from;
-	(graph->edges)[(graph->num_edges)++] = to;
-}
-
 struct edgelist * generate(int size)
 {
 	struct interval *intervals = malloc(size*sizeof(struct interval));
@@ -46,7 +35,7 @@ struct edgelist * generate(int size)
 		double start = intervals[j].start;
 		while(j < size && start < intervals[i].end)
 		{
-			make_edge(graph, i, j);
+			edgelist_make_edge(graph, i, j);
 			start = intervals[++j].start;
 		}
 	}
