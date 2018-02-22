@@ -82,7 +82,8 @@ struct edgelist * read_dimacs_edgelist(char *filename)
 			while(fgetc(in_file) != '\n');
 			break;
 		case 'p' :
-			fscanf(in_file, " edge %d %d ", &num_nodes, &num_edges);
+			fscanf(in_file, " edge %d %d ",
+				&num_nodes, &num_edges);
 			num_edges *= 2;
 			int *edges = malloc(num_edges*sizeof(int));
 			*graph = (struct edgelist)
@@ -90,7 +91,7 @@ struct edgelist * read_dimacs_edgelist(char *filename)
 			break;
 		case 'e' :
 			fscanf(in_file, "%d %d ", &from, &to);
-			edgelist_make_edge(graph, from, to);
+			edgelist_make_edge(graph, --from, --to);
 			break;
 		default :
 			fprintf(stderr, "Unknown descriptor in DIMACS file %s: %c\n", filename, desc);
