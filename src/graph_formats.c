@@ -13,6 +13,12 @@ void edgelist_make_edge(struct edgelist *graph, int from, int to)
 	(graph->edges)[(graph->num_edges)++] = to;
 }
 
+void delete_edgelist(struct edgelist *graph)
+{
+	free(graph->edges);
+	free(graph);
+}
+
 void _adj_make_edge(struct adjlist *graph, int from, int to)
 {
 	if((graph->degrees)[from] >= (graph->sizes)[from])

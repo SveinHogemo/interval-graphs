@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "graph_defs.h"
 #include "graph_formats.h"
 
 struct nodeset { int *nodes; int cardinality; int size; };
@@ -19,14 +18,15 @@ void delete_nodeset(struct nodeset *set)
 	free(set);
 }
 
-void nodeset_add_node(struct nodeset *set, int node)
+int nodeset_add_node(struct nodeset *set, int node)
 {
 	if(set->cardinality >= set->size)
 	{
-		size *= 2;
-		set->nodes = realloc(size*sizeof(int));
+		set->size *= 2;
+		set->nodes = realloc(set->nodes, set->size*sizeof(int));
 	}
 	set->nodes[set->cardinality++] = node;
+	return set->cardinality;
 }
 
 void nodeset_delete_node(struct nodeset *set, int where)
@@ -47,21 +47,30 @@ void delete_link(struct nodeset_link *link) {
 	free(link);
 }
 
-struct locate_pair { struct nodeset_link *link, int place };
+struct locate_pair { struct nodeset_link *link; int place; };
 
 struct nodeset_locate { struct locate_pair **pairs; int size; };
+
+void delete_locate(struct nodeset_locate *locate)
+{
+	for(int i = 0; i < locate->size; i++)
+		free(locate->pairs[i]);
+	free(locate->pairs);
+	free(locate);
+}
 
 struct nodeset_queue
 {
 	struct nodeset_link *first;
 	struct nodeset_locate *locate;
+	int length;
 };
 
 struct nodeset_queue * make_nodeset_queue(int num_nodes, int timestamp)
 {
 	struct nodeset *set = make_nodeset(num_nodes);
 	for(set->cardinality = 0; set->cardinality < num_nodes; set->cardinality++)
-		nodes[set->cardinality] = set->cardinality;
+		set->nodes[set->cardinality] = set->cardinality;
 	struct nodeset_link *link = malloc(sizeof(struct nodeset_link));
 	*link = (struct nodeset_link) { set, 0, 0, timestamp };
 	struct locate_pair **pairs = malloc
@@ -74,7 +83,21 @@ struct nodeset_queue * make_nodeset_queue(int num_nodes, int timestamp)
 	struct nodeset_locate *locate = malloc(sizeof(struct nodeset_locate));
 	*locate = (struct nodeset_locate) { pairs, num_nodes };
 	struct nodeset_queue *queue = malloc(sizeof(struct nodeset_queue));
-	*queue = (struct nodeset_queue) { link, locate };
+	*queue = (struct nodeset_queue) { link, locate, 1 };
+	return queue;
+}
+
+void delete_nodeset_queue(struct nodeset_queue *queue)
+{
+	struct nodeset_link *link = queue->first;
+	while(link)
+	{
+		link = link->next;
+		delete_link(queue->first);
+		queue->first = link;
+	}
+	delete_locate(queue->locate);
+	free(queue);
 }
 
 void dequeue(struct nodeset_queue *queue)
@@ -82,21 +105,25 @@ void dequeue(struct nodeset_queue *queue)
 	struct nodeset_link *next = queue->first->next;
 	delete_link(queue->first);
 	queue->first = next;
+	queue->length--;
 }
 
 int pick(struct nodeset_queue *queue)
 {
 	struct nodeset *first = queue->first->set;
-	int chosen = set->nodes[--set->cardinality];
-	if(!set->cardinality)
+	int chosen = first->nodes[--first->cardinality];
+	if(!first->cardinality)
 		dequeue(queue);
 	return chosen;
+	struct locate_pair *located = queue->locate->pairs[chosen];
+	located->link = 0;
+	located->place = -1;
 }
 
 void split_queue(struct nodeset_queue *queue, int pivot, int timestamp)
 {
 	struct locate_pair *is_located = queue->locate->pairs[pivot];
-	struct nodeset_link *link = locate_pair->link;
+	struct nodeset_link *link = is_located->link;
 	struct nodeset_link *previous = link->previous;
 	if(is_located->link->timestamp < timestamp)
 	{
@@ -104,12 +131,16 @@ void split_queue(struct nodeset_queue *queue, int pivot, int timestamp)
 		struct nodeset_link *new_link = malloc
 			(sizeof(struct nodeset_link));
 		*new_link = (struct nodeset_link)
-			{ set, previous, link, timestamp };
+			{ new_set, previous, link, timestamp };
 		link->previous = previous->next = new_link;
 		previous = new_link;
+		queue->length++;
 	}
 	nodeset_delete_node(link->set, is_located->place);
-	nodeset_add_node(previous->set, pivot);
+	int where = nodeset_add_node(previous->set, pivot);
+	struct locate_pair *located = queue->locate->pairs[pivot];
+	located->link = previous;
+	located->place = where;
 }
 
 int * lex_bfs(struct adjlist *graph)
@@ -129,7 +160,7 @@ int * lex_bfs(struct adjlist *graph)
 	}
 	while(queue)
 		ordering[current_rank++] = pick(queue);
-	delete_queue(queue);
+	delete_nodeset_queue(queue);
 	return ordering;
 }
 

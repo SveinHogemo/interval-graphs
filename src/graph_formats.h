@@ -11,6 +11,12 @@ struct adjlist { int num_nodes; int **edges; int *degrees; int *sizes; };
 
 void edgelist_make_edge(struct edgelist *, int, int);
 
+void delete_edgelist(struct edgelist *);
+
+void adjlist_make_edge(struct adjlist *, int, int);
+
+struct adjlist * edgelist_to_adjlist(struct edgelist *);
+
 void write_dimacs_edgelist(struct edgelist *, char *);
 
 struct edgelist * read_dimacs_edgelist(char *);
