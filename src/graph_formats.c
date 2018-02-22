@@ -1,6 +1,55 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "graph_defs.h"
+#include "graph_formats.h"
+
+void edgelist_make_edge(struct edgelist *graph, int from, int to)
+{
+	if(graph->num_edges >= graph->size)
+	{
+		graph->size *= 2;
+		graph->edges = realloc(graph->edges, graph->size*sizeof(int));
+	}
+	(graph->edges)[(graph->num_edges)++] = from;
+	(graph->edges)[(graph->num_edges)++] = to;
+}
+
+void _adj_make_edge(struct adjlist *graph, int from, int to)
+{
+	if((graph->degrees)[from] >= (graph->sizes)[from])
+	{
+		(graph->sizes)[from] *= 2;
+		(graph->edges)[from] = realloc(graph->edges,
+			(graph->sizes)[from]*sizeof(int));
+	}
+	(graph->edges)[from][(graph->degrees)[from]++] = to;
+}
+
+void adjlist_make_edge(struct adjlist *graph, int from, int to)
+{
+	_adj_make_edge(graph, from, to);
+	_adj_make_edge(graph, to, from);
+}
+
+/* non-destructive */
+struct adjlist * edgelist_to_adjlist(struct edgelist *graph)
+{
+	struct adjlist *result = malloc(sizeof(struct adjlist));
+	int num_nodes = graph->num_nodes;
+	int average_degree = (graph->num_edges/(2*num_nodes))+1;
+	int **edges = malloc(num_nodes*sizeof(int *));
+	int *degrees = calloc(num_nodes, sizeof(int));
+	int *sizes = malloc(num_nodes*sizeof(int));
+	for(int i = 0; i < num_nodes; i++)
+	{
+		edges[i] = calloc(average_degree, sizeof(int));
+		sizes[i] = average_degree;
+	}
+	*result = (struct adjlist) { num_nodes, edges, degrees, sizes };
+	for(int i = 0; i < graph->num_edges; i += 2)
+		adjlist_make_edge(result, (graph->edges)[i],
+			(graph->edges)[i+1]);
+	return result;
+}
 
 void write_dimacs_edgelist(struct edgelist *graph, char *filename)
 {
