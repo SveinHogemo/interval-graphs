@@ -21,11 +21,11 @@ void delete_edgelist(struct edgelist *graph)
 
 void _adj_make_edge(struct adjlist *graph, int from, int to)
 {
-	if((graph->degrees)[from] >= (graph->sizes)[from])
+	if(graph->degrees[from] >= graph->sizes[from])
 	{
-		(graph->sizes)[from] *= 2;
-		(graph->edges)[from] = realloc(graph->edges,
-			(graph->sizes)[from]*sizeof(int));
+		graph->sizes[from] *= 2;
+		graph->edges[from] = realloc(graph->edges[from],
+			graph->sizes[from]*sizeof(int));
 	}
 	(graph->edges)[from][(graph->degrees)[from]++] = to;
 }

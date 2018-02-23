@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include "graph_defs.h"
 #include "graph_formats.h"
 
 #define MAX 1023

@@ -1,5 +1,4 @@
 *.o
 *.out
 test
-test/*
 *.dgf
