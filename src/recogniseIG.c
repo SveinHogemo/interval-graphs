@@ -24,8 +24,6 @@ struct nodeset_queue
 	int length;
 };
 
-void print_queue(struct nodeset_queue *queue);
-
 struct nodeset * make_nodeset(int size)
 {
 	int *nodes = calloc(size, sizeof(int));
@@ -128,7 +126,6 @@ int pick(struct nodeset_queue *queue)
 
 void split_queue(struct nodeset_queue *queue, int pivot, int timestamp)
 {
-	printf("\nSplitting on node %d:\n", pivot+1);
 	struct locate_pair *is_located = queue->locate->pairs[pivot];
 	struct nodeset_link *link = is_located->link;
 	struct nodeset_link *previous = link->previous;
@@ -161,8 +158,6 @@ void split_queue(struct nodeset_queue *queue, int pivot, int timestamp)
 	struct locate_pair *located = queue->locate->pairs[pivot];
 	located->link = previous;
 	located->place = where;
-	printf("\nAfter split:\n");
-	print_queue(queue);
 }
 
 int * lex_bfs(struct adjlist *graph)
@@ -170,19 +165,10 @@ int * lex_bfs(struct adjlist *graph)
 	int current_rank = 0;
 	struct nodeset_queue *queue = make_nodeset_queue
 		(graph->num_nodes, current_rank);
-	print_queue(queue);
 	int *ordering = malloc(graph->num_nodes*sizeof(int));
 	while(queue->length < graph->num_nodes - current_rank)
 	{
-		printf("\nCurrent rank is %d\n", current_rank);
-		printf("Queue has length %d\n", queue->length);
 		int node = pick(queue);
-		printf("\nNode %d picked\n", node+1);
-		printf("Node %d has neighbours:", node+1);
-		for(int i = 0; i < graph->degrees[node]; i++)
-			printf(" %d", graph->edges[node][i]+1);
-		printf("\n");
-		print_queue(queue);
 		ordering[current_rank] = node;
 		for(int i = 0; i < graph->degrees[node]; i++)
 		{
@@ -194,10 +180,7 @@ int * lex_bfs(struct adjlist *graph)
 	}
 	while(queue->first)
 	{
-		printf("\nCurrent rank is %d\n", current_rank);
-		printf("Queue has length %d\n", queue->length);
 		ordering[current_rank++] = pick(queue);
-		print_queue(queue);
 	}
 	delete_nodeset_queue(queue);
 	return ordering;
@@ -213,9 +196,6 @@ int main(int argc, char **argv)
 	struct edgelist *edges = read_dimacs_edgelist(argv[1]);
 	struct adjlist *graph = edgelist_to_adjlist(edges);
 	delete_edgelist(edges);
-	for(int i = 0; i < graph->num_nodes; i++)
-		for(int j = 0; j < graph->degrees[i]; j++)
-			printf("%d %d\n", i+1, graph->edges[i][j]+1);
 	int *ordering = lex_bfs(graph);
 	printf("The ordering of nodes according to Lex-BFS is:");
 	for(int i = 0; i < graph->num_nodes; i++)
@@ -233,23 +213,5 @@ int main(int argc, char **argv)
 	else
 		puts("Is not interval graph"); */
 	return 0;
-}
-
-void print_queue(struct nodeset_queue *queue)
-{
-	printf("\nQUEUE\n\nSets:\n");
-	struct nodeset_link *current = queue->first;
-	while(current)
-	{
-		printf("%u: (%d", current, current->set->nodes[0]+1);
-		for(int i = 1; i < current->set->cardinality; i++)
-			printf(",%d", current->set->nodes[i]+1);
-		printf(")\n");
-		current = current->next;
-	}
-	printf("\nLocations:\n");
-	struct locate_pair **locs = queue->locate->pairs;
-	for(int i = 0; i < queue->locate->size; i++)
-		printf("%d at cell %d in set %u\n", i+1, locs[i]->place, locs[i]->link);
 }
 
