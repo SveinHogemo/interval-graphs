@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "graph_formats.h"
 
-struct nodeset { int *nodes; int cardinality; int size; };
+struct nodeset { int *nodes; int crd; int size; };
 
 struct nodeset_link
 {
@@ -40,18 +40,18 @@ void delete_nodeset(struct nodeset *set)
 
 int nodeset_add_node(struct nodeset *set, int node)
 {
-	if(set->cardinality >= set->size)
+	if(set->crd >= set->size)
 	{
 		set->size *= 2;
 		set->nodes = realloc(set->nodes, set->size*sizeof(int));
 	}
-	set->nodes[set->cardinality++] = node;
-	return set->cardinality-1;
+	set->nodes[set->crd++] = node;
+	return set->crd-1;
 }
 
 int nodeset_delete_node(struct nodeset *set, int where)
 {
-	set->nodes[where] = set->nodes[--set->cardinality];
+	set->nodes[where] = set->nodes[--set->crd];
 	return set->nodes[where];
 }
 
@@ -71,8 +71,8 @@ void delete_locate(struct nodeset_locate *locate)
 struct nodeset_queue * make_nodeset_queue(int num_nodes, int timestamp)
 {
 	struct nodeset *set = make_nodeset(num_nodes);
-	for(set->cardinality = 0; set->cardinality < num_nodes; set->cardinality++)
-		set->nodes[set->cardinality] = set->cardinality;
+	for(set->crd = 0; set->crd < num_nodes; set->crd++)
+		set->nodes[set->crd] = set->crd;
 	struct nodeset_link *link = malloc(sizeof(struct nodeset_link));
 	*link = (struct nodeset_link) { set, 0, 0, 0, timestamp };
 	struct locate_pair **pairs = malloc
@@ -115,8 +115,8 @@ void dequeue(struct nodeset_queue *queue)
 int pick(struct nodeset_queue *queue)
 {
 	struct nodeset *first = queue->first->set;
-	int chosen = first->nodes[--first->cardinality];
-	if(!first->cardinality)
+	int chosen = first->nodes[--first->crd];
+	if(!first->crd)
 		dequeue(queue);
 	struct locate_pair *located = queue->locate->pairs[chosen];
 	located->link = 0;
@@ -146,7 +146,7 @@ void split_queue(struct nodeset_queue *queue, int pivot, int timestamp)
 	}
 	int displaced = nodeset_delete_node(link->set, is_located->place);
 	queue->locate->pairs[displaced]->place = is_located->place;
-	if(link->set->cardinality == 0)
+	if(link->set->crd == 0)
 	{
 		if(link->next)
 			link->next->previous = previous;
@@ -186,6 +186,51 @@ int * lex_bfs(struct adjlist *graph)
 	return ordering;
 }
 
+int check_chordal(struct adjlist *graph, int *ordering)
+{
+	struct nodeset **bucket_to = malloc
+		(graph->num_nodes*sizeof(struct nodeset *));
+	struct nodeset **bucket_from = malloc
+		(graph->num_nodes*sizeof(struct nodeset *));
+	for(int i = 0; i < graph->num_nodes; i++)
+		bucket_to[i] = make_nodeset(2);
+		bucket_from[i] = make_nodeset(2);
+	for(int i = 0; i < graph->num_nodes; i++)
+		for(int j = 0; j < graph->degrees[i]; j++) {
+			int k = graph->edges[i][j];
+			if(ordering[i] < ordering[k])
+				nodeset_add_node(bucket_to[k], i);
+		}
+	for(int i = 0; i < graph->num_nodes; i++)
+		for(int j = 0; j < bucket_to[i]->crd, j++)
+			int k = bucket_to[i]->nodes[j];
+			nodeset_add_node(bucket_from[k], i);
+	for(int i = 0; i < graph->num_nodes; i++)
+		if(bucket_from[i]->crd) {
+			int parent = bucket_from[i]->
+				nodes[bucket_from[i]->crd-1];
+			int n_j = 0;
+			int p_j = 0;
+			while(n_j < bucket_from[i]->crd-1) {
+				int k = bucket_from[i]->nodes[n_j];
+				if(k == parent) {
+					n_j++;
+					continue;
+				}
+				while(ordering[k] > ordering
+					[bucket_from[parent]->nodes[p_j]] &&
+					p_j < bucket_from[parent]->crd)
+					p_j++;
+				if(p_j >= bucket_from[parent]->crd ||
+					ordering[k] < ordering
+					[bucket_from[parent]->nodes[p_j]])
+					return 0;
+				n_j++;
+			}
+		}
+	return 1;
+}
+
 int main(int argc, char **argv)
 {
 	if(argc < 2)
@@ -195,7 +240,7 @@ int main(int argc, char **argv)
 	}
 	struct edgelist *edges = read_dimacs_edgelist(argv[1]);
 	struct adjlist *graph = edgelist_to_adjlist(edges);
-	delete_edgelist(edges);
+	/* delete_edgelist(edges); */
 	int *ordering = lex_bfs(graph);
 	printf("The ordering of nodes according to Lex-BFS is:");
 	for(int i = 0; i < graph->num_nodes; i++)
