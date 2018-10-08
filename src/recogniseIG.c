@@ -246,12 +246,12 @@ int main(int argc, char **argv)
 	for(int i = 0; i < graph->num_nodes; i++)
 		printf(" %d", ordering[i]+1);
 	printf("\n");
-/*	if(!check_chordal(graph, ordering))
+	if(!check_chordal(graph, ordering))
 	{
 		puts("Is not chordal graph or interval graph");
 		return 0;
 	}
-	puts("Is chordal graph");
+/*	puts("Is chordal graph");
 	struct clique_tree *cliques = make_clique_tree(graph, ordering);
 	if(check_interval(graph, ordering, cliques)
 		puts("Is interval graph");
